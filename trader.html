@@ -1,0 +1,315 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Trader Run: God Mode</title>
+    <style>
+        :root {
+            --green: #26a69a;
+            --red: #ef5350;
+            --gold: #ffd700;
+            --dark: #0b0e11;
+        }
+
+        body {
+            margin: 0;
+            font-family: 'Arial', sans-serif;
+            background-color: var(--dark);
+            color: white;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+        }
+
+        /* --- Contenedor y Fondo --- */
+        #game-container {
+            position: relative;
+            width: 100%;
+            max-width: 800px;
+            height: 380px;
+            background: #161a1e;
+            border-bottom: 5px solid #363a45;
+            overflow: hidden;
+            cursor: pointer;
+            touch-action: manipulation;
+        }
+
+        .grid-bg {
+            position: absolute;
+            width: 200%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(255,255,255,0.05) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+            animation: moveGrid 10s linear infinite;
+        }
+
+        @keyframes moveGrid { from { transform: translateX(0); } to { transform: translateX(-50px); } }
+
+        /* --- Trader Mejorado --- */
+        #trader {
+            position: absolute;
+            bottom: 0;
+            left: 60px;
+            width: 50px;
+            height: 80px;
+            z-index: 10;
+            transition: opacity 0.2s;
+        }
+
+        .head { width: 24px; height: 24px; background: #ffdbac; border-radius: 50%; margin: 0 auto; border: 1px solid #000; }
+        .suit { 
+            width: 34px; height: 38px; background: #0052ff; 
+            margin: -2px auto; border-radius: 4px; position: relative; 
+        }
+        .briefcase {
+            position: absolute;
+            right: -12px; bottom: 8px;
+            width: 20px; height: 16px;
+            background: #4e342e; border-radius: 3px;
+            border: 1px solid #2d1b17;
+        }
+        .leg { position: absolute; bottom: -18px; width: 12px; height: 18px; background: #002db3; }
+        .leg-l { left: 4px; animation: walk 0.3s infinite alternate; }
+        .leg-r { right: 4px; animation: walk 0.3s infinite alternate-reverse; }
+
+        @keyframes walk { from { height: 18px; } to { height: 10px; } }
+
+        /* Aura de Fuego (Score > 100) */
+        .fire {
+            position: absolute;
+            bottom: -15px; left: -15px; width: 80px; height: 100px;
+            background: radial-gradient(circle, rgba(255,69,0,0.7) 0%, transparent 70%);
+            filter: blur(8px);
+            display: none;
+            animation: flicker 0.15s infinite;
+        }
+        @keyframes flicker { 0% { transform: scale(1); opacity: 0.7; } 100% { transform: scale(1.2); opacity: 1; } }
+
+        /* --- Velas Japonesas Gigantes --- */
+        .candle { position: absolute; bottom: 0; display: flex; flex-direction: column; align-items: center; }
+        .wick { width: 4px; height: 140px; background: currentColor; }
+        .body-c { width: 30px; height: 80px; background: currentColor; margin-top: -110px; border-radius: 4px; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+
+        /* --- UI --- */
+        #stats {
+            display: flex; justify-content: space-around; width: 100%;
+            max-width: 800px; padding: 15px; background: #1e2329;
+            font-weight: bold; font-size: 1.2rem; border-bottom: 2px solid var(--green);
+        }
+
+        .token {
+            position: absolute; width: 45px; height: 45px; 
+            border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-weight: bold; background: var(--gold);
+            color: black; box-shadow: 0 0 15px var(--gold); font-size: 0.8rem;
+        }
+
+        .game-over {
+            position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+            background: rgba(0,0,0,0.95); padding: 40px; border-radius: 20px;
+            text-align: center; display: none; z-index: 100; border: 3px solid var(--red);
+        }
+
+        .support-card {
+            background: #1e2329; padding: 25px; border-radius: 15px;
+            margin: 20px; max-width: 600px; text-align: center;
+            border: 1px solid #363a45;
+        }
+
+        .wallet {
+            background: #0b0e11; padding: 10px; color: var(--green);
+            font-family: monospace; word-break: break-all; margin: 10px 0;
+            display: block; border: 1px dashed #474d57;
+        }
+
+        button {
+            background: var(--green); color: white; border: none;
+            padding: 12px 25px; border-radius: 8px; font-weight: bold; cursor: pointer;
+        }
+
+        .invulnerable { opacity: 0.5; }
+    </style>
+</head>
+<body>
+
+    <div id="stats">
+        <span>❤️ VIDAS: <span id="lives">3</span></span>
+        <span>💰 PROFIT: <span id="score">0</span></span>
+    </div>
+
+    <div id="game-container" onclick="jump()">
+        <div class="grid-bg"></div>
+        <div id="trader">
+            <div id="fire-aura" class="fire"></div>
+            <div class="head"></div>
+            <div class="suit"><div class="briefcase"></div></div>
+            <div class="leg leg-l"></div>
+            <div class="leg leg-r"></div>
+        </div>
+
+        <div id="game-over" class="game-over">
+            <h1 style="color: var(--red);">MARGIN CALL</h1>
+            <p id="final-score"></p>
+            <button onclick="location.reload()">REINTENTAR</button>
+        </div>
+    </div>
+
+    <div class="support-card">
+        <h3>🚀 Apoya el Desarrollo</h3>
+        <p>¿Te gusta esta versión fluida? Ayúdanos a añadir más activos.</p>
+        <strong>USDT (Network BEP20/TRC20):</strong>
+        <span class="wallet">0x7801b0c6db412ef2ff5eb9d0f8ea8b28d9fcab8f</span>
+        <strong>Binance ID:</strong>
+        <span class="wallet">443013496</span>
+    </div>
+
+    <p style="max-width: 600px; text-align: center; opacity: 0.7; padding: 0 15px;">
+        <b>Descripción:</b> Trader Run es un simulador de volatilidad. Esquiva las velas rojas para no perder vidas. Las velas verdes son aire. Recolecta BTC, Bull y Bear para ganar. ¡A los 100 puntos activas el God Mode!
+    </p>
+
+    <footer style="margin-bottom: 20px; opacity: 0.4; font-size: 0.8rem;">
+        &copy; 2026 Trader Outsider Studio.
+    </footer>
+
+    <script>
+        const trader = document.getElementById('trader');
+        const fire = document.getElementById('fire-aura');
+        const scoreEl = document.getElementById('score');
+        const livesEl = document.getElementById('lives');
+        const container = document.getElementById('game-container');
+
+        let score = 0;
+        let lives = 3;
+        let jumping = false;
+        let active = true;
+        let speed = 7;
+        let entities = [];
+        let invulnerable = false;
+
+        // Salto más rápido y ligero
+        function jump() {
+            if (jumping || !active) return;
+            jumping = true;
+            let pos = 0;
+            let velocity = 15; // Velocidad inicial de impulso
+            const gravity = 0.8;
+
+            let jumpInterval = setInterval(() => {
+                pos += velocity;
+                velocity -= gravity; // Gravedad constante
+
+                if (pos <= 0) {
+                    pos = 0;
+                    clearInterval(jumpInterval);
+                    jumping = false;
+                }
+                trader.style.bottom = pos + 'px';
+            }, 10);
+        }
+
+        function spawn() {
+            if (!active) return;
+            const ent = document.createElement('div');
+            const rnd = Math.random();
+            
+            if (rnd < 0.5) { // Velas Gigantes
+                ent.className = 'candle';
+                const isRed = Math.random() > 0.45;
+                ent.dataset.type = isRed ? 'red' : 'green';
+                ent.style.color = isRed ? 'var(--red)' : 'var(--green)';
+                ent.innerHTML = `<div class="wick"></div><div class="body-c"></div>`;
+            } else if (rnd < 0.75) { // Activos
+                ent.className = 'token';
+                ent.dataset.type = 'money';
+                ent.innerHTML = 'BTC';
+            } else { // Bull / Bear
+                ent.className = 'token';
+                const isBull = Math.random() > 0.5;
+                ent.dataset.type = isBull ? 'bull' : 'bear';
+                ent.style.background = isBull ? 'var(--green)' : 'var(--red)';
+                ent.style.color = 'white';
+                ent.innerHTML = isBull ? '🐂' : '🐻';
+            }
+
+            ent.style.left = '850px';
+            ent.style.bottom = (rnd > 0.6 && ent.className === 'token') ? '110px' : '0px';
+            container.appendChild(ent);
+            entities.push(ent);
+            
+            let nextSpawn = Math.random() * 1200 + 600;
+            setTimeout(spawn, nextSpawn);
+        }
+
+        function loop() {
+            if (!active) return;
+            
+            entities.forEach((ent, i) => {
+                let x = parseFloat(ent.style.left);
+                x -= speed;
+                ent.style.left = x + 'px';
+
+                const t = trader.getBoundingClientRect();
+                const e = ent.getBoundingClientRect();
+
+                // Colisiones con margen de error (Hitbox ajustada)
+                if (t.right > e.left + 15 && t.left < e.right - 15 && t.bottom > e.top + 10 && t.top < e.bottom - 10) {
+                    const type = ent.dataset.type;
+                    
+                    if (type === 'red' && !invulnerable) {
+                        handleHit();
+                        remove(ent, i);
+                    } else if (type === 'money') {
+                        score += 10;
+                        remove(ent, i);
+                    } else if (type === 'bear') {
+                        lives--;
+                        score = Math.max(0, score - 10);
+                        remove(ent, i);
+                    } else if (type === 'bull') {
+                        lives++;
+                        remove(ent, i);
+                    }
+                    
+                    if (lives <= 0) endGame();
+                    updateUI();
+                }
+                if (x < -100) remove(ent, i);
+            });
+            speed += 0.0008;
+            requestAnimationFrame(loop);
+        }
+
+        function handleHit() {
+            lives--;
+            invulnerable = true;
+            trader.classList.add('invulnerable');
+            setTimeout(() => {
+                invulnerable = false;
+                trader.classList.remove('invulnerable');
+            }, 1000); // 1 segundo de invulnerabilidad tras golpe
+        }
+
+        function updateUI() {
+            scoreEl.innerText = score;
+            livesEl.innerText = lives;
+            if (score >= 100) fire.style.display = 'block';
+        }
+
+        function remove(e, i) { e.remove(); entities.splice(i, 1); }
+        
+        function endGame() {
+            active = false;
+            document.getElementById('game-over').style.display = 'block';
+            document.getElementById('final-score').innerText = `Profit Final: ${score} pts`;
+        }
+
+        document.addEventListener('keydown', (e) => { if(e.code==='Space') jump(); });
+
+        spawn();
+        loop();
+    </script>
+</body>
+</html>
